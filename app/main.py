@@ -18,7 +18,6 @@ from .model_service import AnomalyDetectionService
 from .data_ingestion.api import router as ingestion_router
 from .api.network_capture_routes import router as capture_router
 from .config import settings
-from .monitoring import MonitoringMiddleware, get_metrics_service
 from .rate_limiter import RateLimitMiddleware
 from .cache import get_cache_service
 
@@ -31,11 +30,8 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Add middleware
-app.add_middleware(MonitoringMiddleware)
 app.add_middleware(RateLimitMiddleware)
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
@@ -44,14 +40,11 @@ app.add_middleware(
     allow_headers=settings.allowed_headers,
 )
 
-# Global model service instance
 model_service = None
 
 def get_model_service() -> AnomalyDetectionService:
-    """Dependency to get model service instance"""
     global model_service
     if model_service is None:
-        # Try to load model from default paths
         model_path = settings.model.model_path
         preprocessor_path = settings.model.preprocessor_path
         
@@ -68,10 +61,8 @@ def get_model_service() -> AnomalyDetectionService:
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize services on startup"""
     global model_service
     try:
-        # Initialize model service
         model_service = AnomalyDetectionService()
         model_path = settings.model.model_path
         preprocessor_path = settings.model.preprocessor_path
@@ -80,24 +71,18 @@ async def startup_event():
             model_service.load_model(model_path, preprocessor_path)
             print(f"Model loaded successfully: {settings.model.model_version}")
         
-        # Initialize cache service
         cache_service = get_cache_service()
         print(f"Cache service initialized: {cache_service.get_stats()}")
         
-        # Initialize metrics service
-        metrics_service = get_metrics_service()
-        print(f"Metrics service initialized")
         
     except Exception as e:
         print(f"Warning: Could not initialize services on startup: {e}")
 
-# Include routers
 app.include_router(ingestion_router)
 app.include_router(capture_router)
 
 @app.get("/", response_model=dict)
 async def root():
-    """Root endpoint"""
     return {
         "message": "Network Security Anomaly Detection API with Real-time Capture",
         "version": "2.0.0",
@@ -119,11 +104,9 @@ async def root():
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
-    """Health check endpoint"""
     service = get_model_service()
     health_info = service.health_check()
     
-    # Add additional health checks
     from .network_capture import get_network_capture_service
     from .real_time_processor import get_real_time_processor
     
@@ -147,14 +130,12 @@ async def health_check():
 
 @app.get("/model/info", response_model=ModelInfo)
 async def get_model_info():
-    """Get model information"""
     service = get_model_service()
     info = service.get_model_info()
     return ModelInfo(**info)
 
 @app.post("/predict", response_model=PredictionResponse)
 async def predict_single(data: NetworkTrafficData):
-    """Predict anomaly for a single network traffic record"""
     try:
         service = get_model_service()
         result = service.predict_single(data)
@@ -164,7 +145,6 @@ async def predict_single(data: NetworkTrafficData):
 
 @app.post("/predict/batch", response_model=BatchPredictionResponse)
 async def predict_batch(data: BatchNetworkTrafficData):
-    """Predict anomalies for multiple network traffic records"""
     try:
         service = get_model_service()
         result = service.predict_batch(data.records)
@@ -174,7 +154,6 @@ async def predict_batch(data: BatchNetworkTrafficData):
 
 @app.get("/features/importance")
 async def get_feature_importance():
-    """Get feature importance from the model"""
     try:
         service = get_model_service()
         importance = service.get_feature_importance()
@@ -184,7 +163,6 @@ async def get_feature_importance():
 
 @app.post("/model/reload")
 async def reload_model():
-    """Reload the model from disk"""
     try:
         global model_service
         model_path = settings.model.model_path
@@ -202,7 +180,6 @@ async def reload_model():
 
 @app.get("/stats")
 async def get_stats():
-    """Get API statistics"""
     from .network_capture import get_network_capture_service
     from .real_time_processor import get_real_time_processor
     
@@ -228,31 +205,7 @@ async def get_stats():
         ]
     }
 
-@app.get("/metrics")
-async def get_metrics():
-    """Get Prometheus metrics"""
-    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
-    from fastapi.responses import Response
-    
-    return Response(
-        content=generate_latest(),
-        media_type=CONTENT_TYPE_LATEST
-    )
 
-# Error handlers
-@app.exception_handler(404)
-async def not_found_handler(request, exc):
-    return JSONResponse(
-        status_code=404,
-        content={"detail": "Endpoint not found"}
-    )
-
-@app.exception_handler(500)
-async def internal_error_handler(request, exc):
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error"}
-    )
 
 if __name__ == "__main__":
     uvicorn.run(
