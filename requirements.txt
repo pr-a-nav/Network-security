@@ -1,0 +1,68 @@
+# Core ML and Data Processing
+scikit-learn>=1.3.0
+pandas>=2.0.0
+numpy>=1.24.0
+joblib>=1.3.0
+
+# Web Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.4.0
+
+# Security & Authentication
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+python-multipart>=0.0.6
+cryptography>=41.0.0
+
+# Database
+sqlalchemy>=2.0.0
+alembic>=1.12.0
+psycopg2-binary>=2.9.0
+redis>=5.0.0
+
+# Monitoring & Observability
+prometheus-client>=0.17.0
+structlog>=23.1.0
+sentry-sdk[fastapi]>=1.35.0
+
+# Configuration Management
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0
+
+# Rate Limiting & Caching
+slowapi>=0.1.9
+cachetools>=5.3.0
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+httpx>=0.25.0
+
+# Development Tools
+black>=23.9.0
+flake8>=6.1.0
+mypy>=1.6.0
+
+# Additional ML Libraries
+xgboost>=2.0.0
+lightgbm>=4.0.0
+tensorflow>=2.13.0
+
+# Data Processing
+apache-kafka>=2.0.0
+confluent-kafka>=2.3.0
+
+# Visualization
+plotly>=5.17.0
+dash>=2.14.0
+
+# Network Capture & Analysis
+scapy>=2.5.0
+pyshark>=0.6.0
+psutil>=5.9.0
+netifaces>=0.11.0
+
+# Utilities
+python-dateutil>=2.8.0
+pytz>=2023.3 
